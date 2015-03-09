@@ -21,3 +21,16 @@ class YoloFish(object):
         )
         c_memory_block[buffer_size -1] = '\0'
         return ctypes.string_at(c_memory_block, buffer_size).strip('\x00')
+
+    def encrypt(self, plaintext):
+        """Encrypts a given string"""
+        buffer_size = len(plaintext) * 2 + 1
+        c_memory_block = ctypes.create_string_buffer(buffer_size)
+        self.fish.encrypt_string(
+            ctypes.c_char_p(self.key),
+            ctypes.c_char_p(plaintext),
+            c_memory_block,
+            len(plaintext)
+        )
+        c_memory_block[buffer_size -1] = '\0'
+        return '+OK {}'.format(ctypes.string_at(c_memory_block, buffer_size))
