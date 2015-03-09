@@ -1,6 +1,9 @@
 configparser==3.3.0r2
 docopt==0.6.2
 futures==2.2.0
+gnureadline==6.3.3
+ipdb==0.8
+ipython==3.0.0
 irc3==0.7.1
 trollius==1.0.4
 venusian==1.0
