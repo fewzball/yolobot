@@ -5,6 +5,10 @@ gnureadline==6.3.3
 ipdb==0.8
 ipython==3.0.0
 irc3==0.7.1
+py==1.4.26
+pytest==2.6.4
+rethinkdb==1.16.0-2
+test-pkg==0.0
 trollius==1.0.4
 venusian==1.0
 wsgiref==0.1.2

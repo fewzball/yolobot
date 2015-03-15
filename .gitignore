@@ -55,3 +55,5 @@ target/
 
 # I use this for local testing
 config.ini
+
+.idea/
