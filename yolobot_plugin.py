@@ -46,6 +46,7 @@ class Plugin(object):
     COMMANDS = (
         '!addsite',
         '!site',
+        '!sites',
         '!set',
     )
 
@@ -148,6 +149,7 @@ class Plugin(object):
             )
 
     def site(self, target, args):
+        """Returns site info for the given site"""
         if self.usage(args, target, 2, '!site <site_name>'):
             return
         site_info = self.db.get_site(args[1])
@@ -157,6 +159,20 @@ class Plugin(object):
                 target,
                 line
             )
+
+    def sites(self, target, args):
+        """Returns a list of all sites in the database"""
+        results = self.db.list_sites()
+        if len(results) == 0:
+            return self.send_msg(
+                target,
+                'No sites added yet! Add a site with !addsite.'
+            )
+
+        self.send_msg(
+            target,
+            [site['name'] for site in results]
+        )
 
     @classmethod
     def reload(cls, old):

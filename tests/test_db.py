@@ -48,3 +48,14 @@ def test_should_raise_exception_when_trying_to_add_existing_site(yolodb):
 
     with pytest.raises(db.YoloDB.AlreadyExistsError):
         yolodb.add_site(site_fixture)
+
+
+def test_should_list_all_sites_in_the_database(yolodb):
+    sites = ['foo', 'bar', 'baz']
+    for site in sites:
+        yolodb.add_site(site)
+
+    # results should also be in alphabetical order
+    sites.sort()
+    results = yolodb.list_sites()
+    assert [site['name'] for site in results] == sites

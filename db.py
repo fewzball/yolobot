@@ -49,3 +49,10 @@ class YoloDB(object):
         """
         with self.connection() as conn:
             return r.table(self.SITES_TABLE_NAME).get(site_name).run(conn)
+
+    def list_sites(self):
+        """Returns all the sites in the database"""
+        with self.connection() as conn:
+            return r.table(self.SITES_TABLE_NAME).pluck('name').order_by(
+                'name'
+            ).run(conn)
