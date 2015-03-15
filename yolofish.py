@@ -19,7 +19,7 @@ class YoloFish(object):
             c_memory_block,
             len(cipher_text)
         )
-        c_memory_block[buffer_size -1] = '\0'
+        c_memory_block[buffer_size - 1] = '\0'
         return ctypes.string_at(c_memory_block, buffer_size).strip('\x00')
 
     def encrypt(self, plaintext):
@@ -32,5 +32,5 @@ class YoloFish(object):
             c_memory_block,
             len(plaintext)
         )
-        c_memory_block[buffer_size -1] = '\0'
+        c_memory_block[buffer_size - 1] = '\0'
         return '+OK {}'.format(ctypes.string_at(c_memory_block, buffer_size))

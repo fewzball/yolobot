@@ -50,7 +50,7 @@ FIELDS = {
     }
 }
 
-VALID_FIELDS = [field['column_name'] for field in FIELDS]
+VALID_FIELDS = [field['column_name'] for field in FIELDS.itervalues()]
 
 LAYOUT = (
     # Each tuple represents one row in the bots output

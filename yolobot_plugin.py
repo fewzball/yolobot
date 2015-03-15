@@ -23,12 +23,12 @@ class Formatter(object):
                 if isinstance(sitebot_config.FIELDS[field]['type'], list):
                     field_value = site_info.get(
                         ' '.join(sitebot_config.FIELDS[field]['column_name']),
-                        ''
+                        ' '
                     )
                 else:
                     field_value = site_info.get(
                         sitebot_config.FIELDS[field]['column_name'],
-                        ''
+                        ' '
                     )
 
                 line_output.append(
@@ -37,7 +37,7 @@ class Formatter(object):
                         field_value
                     )
                 )
-            output.append(line_output)
+            output.append(' '.join(line_output))
         return output
 
 
@@ -103,13 +103,11 @@ class Plugin(object):
         :return: bool
         """
         if len(args) < num_args:
-            self.bot.privmsg(
+            self.send_msg(
                 target,
-                self.fish.encrypt(
-                    '{} {}'.format(
-                        Formatter.bold('Usage:'),
-                        usage_message
-                    )
+                '{} {}'.format(
+                    Formatter.bold('Usage:'),
+                    usage_message
                 )
             )
             return True
@@ -121,24 +119,32 @@ class Plugin(object):
             return
 
         try:
-            self.db.add_site(args[1])
+            self.db.add_site(args[1].lower())
         except self.db.AlreadyExistsError:
-            return self.bot.privmsg(
-                target, self.fish.encrypt('{} is already added!'.format(
-                    Formatter.bold(args[1]))
-                )
+            return self.send_msg(
+                target,
+                '{} is already added!'.format(Formatter.bold(args[1]))
             )
+
+        self.send_msg(
+            target,
+            'Site {} has been added!'.format(Formatter.bold(args[1]))
+        )
+
+    def send_msg(self, target, msg):
+        self.bot.privmsg(
+            target,
+            self.fish.encrypt(msg)
+        )
 
     def set(self, target, args):
         valid_fields = sitebot_config.VALID_FIELDS
         valid_fields.sort()
         usage_string = '!set <site> <field> <value(s)>'
         if self.usage(args, target, 4, usage_string):
-            return self.bot.privmsg(
+            self.send_msg(
                 target,
-                self.fish.encrypt(
-                    'Allowed fields: {}'.format(' '.join(valid_fields))
-                )
+                'Allowed fields: {}'.format(' '.join(valid_fields))
             )
 
     def site(self, target, args):
@@ -146,10 +152,11 @@ class Plugin(object):
             return
         site_info = self.db.get_site(args[1])
 
-        self.bot.privmsg(
-            target,
-            self.fish.encrypt(site_info)
-        )
+        for line in Formatter.format_site(site_info):
+            self.send_msg(
+                target,
+                line
+            )
 
     @classmethod
     def reload(cls, old):
