@@ -24,7 +24,10 @@ class YoloFish(object):
 
     def encrypt(self, plaintext):
         """Encrypts a given string"""
-        buffer_size = len(plaintext) * 2 + 1
+        if len(plaintext) < 6:
+            buffer_size = len(plaintext) * 2 + 1 + (12 - len(plaintext))
+        else:
+            buffer_size = len(plaintext) * 2 + 1 + (len(plaintext) % 12)
         c_memory_block = ctypes.create_string_buffer(buffer_size)
         self.fish.encrypt_string(
             ctypes.c_char_p(self.key),

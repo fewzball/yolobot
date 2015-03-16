@@ -89,6 +89,14 @@ class Plugin(object):
                 _, msg = data.split(' ', 1)
                 msg = self.fish.decrypt(msg)
                 parts = msg.split()
+
+                if parts[0] == '!reload':
+                    self.bot.reload()
+                    return self.send_msg(
+                        target,
+                        'Reloaded!'
+                    )
+
                 if parts[0] in self.COMMANDS:
                     getattr(self, parts[0].lstrip('!'))(target, parts)
 
@@ -154,6 +162,12 @@ class Plugin(object):
             return
         site_info = self.db.get_site(args[1])
 
+        if not site_info:
+            return self.send_msg(
+                target,
+                'Site {} does not exist!'.format(args[1])
+            )
+
         for line in Formatter.format_site(site_info):
             self.send_msg(
                 target,
@@ -171,10 +185,11 @@ class Plugin(object):
 
         self.send_msg(
             target,
-            [site['name'] for site in results]
+            ' '.join([site['name'] for site in results])
         )
 
     @classmethod
     def reload(cls, old):
         print 'reloading!'
+        reload(yolofish)
         return cls(old.bot)
