@@ -84,3 +84,18 @@ def test_should_convert_list_fields_to_lists(yolodb):
     yolodb.set_value('foo', 'users', 'user1 user2')
     site = yolodb.get_site('foo')
     assert isinstance(site['users'], list)
+
+
+def test_add_value_should_set_value_if_field_doesnt_exist_yet(yolodb):
+    yolodb.add_site('foo')
+    # Also tests that it can accept type set
+    fixture = set(['username1', 'username2'])
+    yolodb.add_value('foo', 'users', fixture)
+    assert yolodb.get_site('foo')['users'] == list(fixture)
+
+
+def test_adding_duplicate_value_should_be_thrown_out(yolodb):
+    yolodb.add_site('foo')
+    yolodb.set_value('foo', 'users', ['user1', 'user2'])
+    assert yolodb.add_value('foo', 'users', ['user1', 'user3']) == \
+           ['user1', 'user2', 'user3']

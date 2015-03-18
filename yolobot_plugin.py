@@ -46,6 +46,7 @@ class Formatter(object):
 @irc3.plugin
 class Plugin(object):
     COMMANDS = (
+        '!add',
         '!addsite',
         '!set',
         '!site',
@@ -125,6 +126,28 @@ class Plugin(object):
             return True
         return False
 
+    def add(self, target, args):
+        if self.usage(args, target, 4, '!add <site> <field> <value(s)>'):
+            return
+
+        if not sitebot_config.COLUMN_MAPPING.get(args[2]) == list:
+            return self.send_msg(
+                target,
+                'Field {} only allows 1 value! Perhaps you want to !set '
+                'instead?'.format(args[2])
+            )
+
+        result = self.db.add_value(args[1], args[2], args[3:])
+        self.send_msg(
+            target,
+            '{}: set {} to: {}'.format(
+                Formatter.bold(args[1]),
+                Formatter.bold([2]),
+                ' '.join(result)
+            )
+        )
+
+
     def addsite(self, target, args):
         """Attempts to add a site to the database"""
         if self.usage(args, target, 2, '!addsite <site>'):
@@ -151,10 +174,10 @@ class Plugin(object):
 
     def set(self, target, args):
         """Sets a value for a site"""
-        valid_fields = sitebot_config.VALID_FIELDS
-        valid_fields.sort()
         usage_string = '!set <site> <field> <value(s)>'
         if self.usage(args, target, 4, usage_string):
+            valid_fields = sitebot_config.VALID_FIELDS
+            valid_fields.sort()
             self.send_msg(
                 target,
                 'Allowed fields: {}'.format(' '.join(valid_fields))
@@ -184,7 +207,7 @@ class Plugin(object):
             target,
             '{}: set {} to: {}'.format(
                 Formatter.bold(args[1]),
-                args[2],
+                Formatter.bold(args[2]),
                 ' '.join(args[3:])
             )
         )
@@ -208,7 +231,7 @@ class Plugin(object):
                 line
             )
 
-    def sites(self, target, args):
+    def sites(self, target, _):
         """Returns a list of all sites in the database"""
         results = self.db.list_sites()
         if len(results) == 0:

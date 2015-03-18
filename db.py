@@ -55,6 +55,29 @@ class YoloDB(object):
             if result['inserted'] != 1:
                 raise self.AlreadyExistsError()
 
+    def add_value(self, site_name, field, value):
+        """
+        Adds a value to an array field.
+        :param site_name: The name of the site that is being modified
+        :param field: The name of the field to add the value to
+        :param value: The value(s) to add to the given field
+        """
+        value = self.validate_type(field, value)
+        with self.connection() as conn:
+            result = r.table(self.SITES_TABLE_NAME).get(
+                site_name
+            ).update({field: r.row[field].set_union(value)}).run(conn)
+
+            if result['errors'] > 0:
+                # field doesn't exist yet?
+                r.table(self.SITES_TABLE_NAME).get(site_name).update(
+                    {field: value}
+                ).run(conn)
+
+            return r.table(self.SITES_TABLE_NAME).get(site_name).run(
+                conn
+            )[field]
+
     def get_site(self, site_name):
         """Looks up a site from the database
 
@@ -77,6 +100,19 @@ class YoloDB(object):
         :param field: What field to set
         :param value: The value to set
         """
+        value = self.validate_type(field, value)
+
+        with self.connection() as conn:
+            return r.table(self.SITES_TABLE_NAME).get(site_name).update(
+                {field: value}
+            ).run(conn)
+
+    def validate_type(self, field, value):
+        """
+        :param field: The field that is taking a new value
+        :param value: The value to be set on the given field
+        :return: The value passed in, cast to its expected type
+        """
         field_type = sitebot_config.COLUMN_MAPPING.get(field)
         if not field_type:
             raise self.InvalidField()
@@ -86,11 +122,8 @@ class YoloDB(object):
 
         if field_type == int:
             try:
-                value = int(value)
+                return int(value)
             except (ValueError, TypeError):
                 raise self.InvalidType('integer')
 
-        with self.connection() as conn:
-            return r.table(self.SITES_TABLE_NAME).get(site_name).update(
-                {field: value}
-            ).run(conn)
+        return value
