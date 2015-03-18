@@ -15,6 +15,9 @@ class YoloDB(object):
         """Raised when trying to set a value on an invalid field"""
         pass
 
+    class InvalidType(Exception):
+        pass
+
     def __init__(self, host, db_name):
         self.host = host
         self.db_name = db_name
@@ -80,6 +83,12 @@ class YoloDB(object):
 
         if field_type != list:
             value = ' '.join(value)
+
+        if field_type == int:
+            try:
+                value = int(value)
+            except (ValueError, TypeError):
+                raise self.InvalidType('integer')
 
         with self.connection() as conn:
             return r.table(self.SITES_TABLE_NAME).get(site_name).update(

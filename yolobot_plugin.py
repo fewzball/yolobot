@@ -168,6 +168,11 @@ class Plugin(object):
                 '{} is an invalid field! Use !set to see a list of valid '
                 'fields'.format(args[2])
             )
+        except self.db.InvalidType as exc:
+            return self.send_msg(
+                target,
+                'Field {} must be of type: {}'.format(args[2], exc.message)
+            )
 
         if result['skipped'] > 0:
             return self.send_msg(

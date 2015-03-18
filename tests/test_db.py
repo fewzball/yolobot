@@ -73,6 +73,12 @@ def test_should_raise_exception_if_given_invalid_field(yolodb):
         yolodb.set_value('foo', 'invalid', 'barf')
 
 
+def test_should_raise_exception_if_passed_invalid_type_for_field(yolodb):
+    yolodb.add_site('foo')
+    with pytest.raises(db.YoloDB.InvalidType):
+        yolodb.set_value('foo', 'speed', 'some string')
+
+
 def test_should_convert_list_fields_to_lists(yolodb):
     yolodb.add_site('foo')
     yolodb.set_value('foo', 'users', 'user1 user2')
