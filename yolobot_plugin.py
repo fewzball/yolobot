@@ -20,15 +20,17 @@ class Formatter(object):
         for row in sitebot_config.LAYOUT:
             line_output = []
             for field in row:
-                if isinstance(sitebot_config.FIELDS[field]['type'], list):
+                if sitebot_config.FIELDS[field]['type'] is list:
                     field_value = site_info.get(
-                        ' '.join(sitebot_config.FIELDS[field]['column_name']),
-                        ' '
+                        sitebot_config.FIELDS[field]['column_name'],
+                        ''
                     )
+                    if field_value:
+                        field_value = ' '.join(field_value)
                 else:
                     field_value = site_info.get(
                         sitebot_config.FIELDS[field]['column_name'],
-                        ' '
+                        ''
                     )
 
                 line_output.append(
@@ -45,9 +47,9 @@ class Formatter(object):
 class Plugin(object):
     COMMANDS = (
         '!addsite',
+        '!set',
         '!site',
         '!sites',
-        '!set',
     )
 
     def __init__(self, bot):
@@ -86,6 +88,7 @@ class Plugin(object):
         # We only care about messages from channels
         if target.startswith('#'):
             if data.startswith('+OK ') or data.startswith('mcps '):
+                data = data.strip()
                 _, msg = data.split(' ', 1)
                 msg = self.fish.decrypt(msg)
                 parts = msg.split()
@@ -147,6 +150,7 @@ class Plugin(object):
         )
 
     def set(self, target, args):
+        """Sets a value for a site"""
         valid_fields = sitebot_config.VALID_FIELDS
         valid_fields.sort()
         usage_string = '!set <site> <field> <value(s)>'
@@ -156,10 +160,35 @@ class Plugin(object):
                 'Allowed fields: {}'.format(' '.join(valid_fields))
             )
 
+        try:
+            result = self.db.set_value(args[1], args[2], args[3:])
+        except self.db.InvalidField:
+            return self.send_msg(
+                target,
+                '{} is an invalid field! Use !set to see a list of valid '
+                'fields'.format(args[2])
+            )
+
+        if result['skipped'] > 0:
+            return self.send_msg(
+                target,
+                'Site {} does not exist!'.format(args[1])
+            )
+
+        self.send_msg(
+            target,
+            '{}: set {} to: {}'.format(
+                Formatter.bold(args[1]),
+                args[2],
+                ' '.join(args[3:])
+            )
+        )
+
     def site(self, target, args):
         """Returns site info for the given site"""
         if self.usage(args, target, 2, '!site <site_name>'):
             return
+
         site_info = self.db.get_site(args[1])
 
         if not site_info:
@@ -192,4 +221,5 @@ class Plugin(object):
     def reload(cls, old):
         print 'reloading!'
         reload(yolofish)
+        reload(db)
         return cls(old.bot)

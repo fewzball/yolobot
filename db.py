@@ -1,12 +1,18 @@
 # -*- coding: utf-8 -*-
 import rethinkdb as r
 
+import sitebot_config
+
 
 class YoloDB(object):
     SITES_TABLE_NAME = 'sites'
 
     class AlreadyExistsError(Exception):
         """Raised when trying to add a site that already exists in the db"""
+        pass
+
+    class InvalidField(Exception):
+        """Raised when trying to set a value on an invalid field"""
         pass
 
     def __init__(self, host, db_name):
@@ -27,6 +33,11 @@ class YoloDB(object):
         except r.errors.RqlRuntimeError:
             # table already exists
             pass
+
+        r.table(self.SITES_TABLE_NAME).index_create('affils', multi=True)
+        r.table(self.SITES_TABLE_NAME).index_create('users', multi=True)
+        r.table(self.SITES_TABLE_NAME).index_create('allows', multi=True)
+        r.table(self.SITES_TABLE_NAME).index_create('banned', multi=True)
 
     def connection(self):
         return r.connect(self.host, db=self.db_name)
@@ -55,4 +66,22 @@ class YoloDB(object):
         with self.connection() as conn:
             return r.table(self.SITES_TABLE_NAME).pluck('name').order_by(
                 'name'
+            ).run(conn)
+
+    def set_value(self, site_name, field, value):
+        """Sets the given value on the given field for the given site
+
+        :param field: What field to set
+        :param value: The value to set
+        """
+        field_type = sitebot_config.COLUMN_MAPPING.get(field)
+        if not field_type:
+            raise self.InvalidField()
+
+        if field_type != list:
+            value = ' '.join(value)
+
+        with self.connection() as conn:
+            return r.table(self.SITES_TABLE_NAME).get(site_name).update(
+                {field: value}
             ).run(conn)

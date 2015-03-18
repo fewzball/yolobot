@@ -59,3 +59,22 @@ def test_should_list_all_sites_in_the_database(yolodb):
     sites.sort()
     results = yolodb.list_sites()
     assert [site['name'] for site in results] == sites
+
+
+def test_should_set_value_successfully(yolodb):
+    yolodb.add_site('foo')
+    result = yolodb.set_value('foo', 'comment', 'this is a comment')
+    assert result['replaced'] == 1
+
+
+def test_should_raise_exception_if_given_invalid_field(yolodb):
+    yolodb.add_site('foo')
+    with pytest.raises(db.YoloDB.InvalidField):
+        yolodb.set_value('foo', 'invalid', 'barf')
+
+
+def test_should_convert_list_fields_to_lists(yolodb):
+    yolodb.add_site('foo')
+    yolodb.set_value('foo', 'users', 'user1 user2')
+    site = yolodb.get_site('foo')
+    assert isinstance(site['users'], list)

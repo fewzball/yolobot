@@ -50,6 +50,8 @@ FIELDS = {
     }
 }
 
+# Maps column map name to its type
+COLUMN_MAPPING = {each['column_name']: each['type'] for each in FIELDS.values()}
 VALID_FIELDS = [field['column_name'] for field in FIELDS.itervalues()]
 
 LAYOUT = (
