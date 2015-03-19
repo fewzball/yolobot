@@ -81,7 +81,7 @@ def test_should_raise_exception_if_passed_invalid_type_for_field(yolodb):
 
 def test_should_convert_list_fields_to_lists(yolodb):
     yolodb.add_site('foo')
-    yolodb.set_value('foo', 'users', 'user1 user2')
+    yolodb.set_value('foo', 'users', ['user1', 'user2'])
     site = yolodb.get_site('foo')
     assert isinstance(site['users'], list)
 
@@ -99,3 +99,9 @@ def test_adding_duplicate_value_should_be_thrown_out(yolodb):
     yolodb.set_value('foo', 'users', ['user1', 'user2'])
     assert yolodb.add_value('foo', 'users', ['user1', 'user3']) == \
            ['user1', 'user2', 'user3']
+
+
+def test_delsite_should_remove_site_from_the_database(yolodb):
+    yolodb.add_site('foo')
+    response = yolodb.delete_site('foo')
+    assert response['deleted'] == 1

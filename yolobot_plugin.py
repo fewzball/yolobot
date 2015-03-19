@@ -48,6 +48,7 @@ class Plugin(object):
     COMMANDS = (
         '!add',
         '!addsite',
+        '!delsite',
         '!set',
         '!site',
         '!sites',
@@ -147,7 +148,6 @@ class Plugin(object):
             )
         )
 
-
     def addsite(self, target, args):
         """Attempts to add a site to the database"""
         if self.usage(args, target, 2, '!addsite <site>'):
@@ -164,6 +164,25 @@ class Plugin(object):
         self.send_msg(
             target,
             'Site {} has been added!'.format(Formatter.bold(args[1]))
+        )
+
+    def delsite(self, target, args):
+        """Deletes a site from the database"""
+        if self.usage(args, target, 2, '!delsite <site>'):
+            return
+
+        response = self.db.delete_site(args[1])
+        if response['deleted'] != 1:
+            return self.send_msg(
+                target,
+                'Site {} does not exist!'.format(args[1])
+            )
+
+        self.send_msg(
+            target,
+            '{} has been wiped from the database!'.format(
+                Formatter.bold(args[1])
+            )
         )
 
     def send_msg(self, target, msg):

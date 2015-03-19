@@ -78,6 +78,13 @@ class YoloDB(object):
                 conn
             )[field]
 
+    def delete_site(self, site_name):
+        """Attempts to delete a site from the database. Returns the response"""
+        with self.connection() as conn:
+            return r.table(self.SITES_TABLE_NAME).get(site_name).delete().run(
+                conn
+            )
+
     def get_site(self, site_name):
         """Looks up a site from the database
 
