@@ -105,3 +105,31 @@ def test_delsite_should_remove_site_from_the_database(yolodb):
     yolodb.add_site('foo')
     response = yolodb.delete_site('foo')
     assert response['deleted'] == 1
+
+
+def test_remove_value_should_remove_value_from_array(yolodb):
+    yolodb.add_site('foo')
+    yolodb.set_value('foo', 'users', ['user1', 'user2'])
+    yolodb.remove_value('foo', 'users', ['user1'])
+    assert yolodb.get_site('foo')['users'] == ['user2']
+
+
+def test_removing_a_value_that_isnt_in_the_array_should_be_a_no_op(yolodb):
+    yolodb.add_site('foo')
+    fixture = ['user1', 'user2']
+    yolodb.set_value('foo', 'users', fixture)
+    yolodb.remove_value('foo', 'users', ['foo'])
+    assert yolodb.get_site('foo')['users'] == fixture
+
+
+def test_removing_a_non_list_value_should_no_op(yolodb):
+    yolodb.add_site('foo')
+    fixture = 'this is a comment'
+    yolodb.set_value('foo', 'comment', fixture)
+    yolodb.remove_value('foo', 'comment', 'blah')
+    assert yolodb.get_site('foo')['comment'] == fixture
+
+
+def test_removing_from_a_non_existent_site_should_skip(yolodb):
+    result = yolodb.remove_value('foo', 'users', ['user1'])
+    assert result['skipped'] == 1

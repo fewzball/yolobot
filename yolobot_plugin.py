@@ -26,7 +26,10 @@ class Formatter(object):
                         ''
                     )
                     if field_value:
-                        field_value = ' '.join(field_value)
+                        if len(field_value) > 0:
+                            field_value = ' '.join(field_value)
+                        else:
+                            field_value = ''
                 else:
                     field_value = site_info.get(
                         sitebot_config.FIELDS[field]['column_name'],
@@ -49,6 +52,8 @@ class Plugin(object):
         '!add',
         '!addsite',
         '!delsite',
+        '!help',
+        '!rm',
         '!set',
         '!site',
         '!sites',
@@ -143,7 +148,7 @@ class Plugin(object):
             target,
             '{}: set {} to: {}'.format(
                 Formatter.bold(args[1]),
-                Formatter.bold([2]),
+                Formatter.bold(args[2]),
                 ' '.join(result)
             )
         )
@@ -166,6 +171,31 @@ class Plugin(object):
             'Site {} has been added!'.format(Formatter.bold(args[1]))
         )
 
+    def rm(self, target, args):
+        """Removes a value from a field"""
+        if self.usage(args, target, 4, '!rm <site> <field> <value>'):
+            return
+
+        try:
+            result = self.db.remove_value(args[1], args[2], args[3:])
+        except self.db.InvalidField:
+            return self.send_msg(
+                target,
+                '{} is an invalid field! Use !set to see a list of valid '
+                'fields'.format(args[2])
+            )
+
+        if result['skipped'] > 0:
+            return self.send_msg(
+                target,
+                'Site {} does not exist!'.format(Formatter.bold(args[1]))
+            )
+
+        self.send_msg(
+            target,
+            '{}: done!'.format(Formatter.bold(args[1]))
+        )
+
     def delsite(self, target, args):
         """Deletes a site from the database"""
         if self.usage(args, target, 2, '!delsite <site>'):
@@ -183,6 +213,12 @@ class Plugin(object):
             '{} has been wiped from the database!'.format(
                 Formatter.bold(args[1])
             )
+        )
+
+    def help(self, target, _):
+        self.send_msg(
+            target,
+            'Available commands: {}'.format(' '.join(self.COMMANDS))
         )
 
     def send_msg(self, target, msg):

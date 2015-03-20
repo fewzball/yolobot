@@ -62,7 +62,7 @@ class YoloDB(object):
         :param field: The name of the field to add the value to
         :param value: The value(s) to add to the given field
         """
-        value = self.validate_type(field, value)
+        value = self.validate_field(field, value)
         with self.connection() as conn:
             result = r.table(self.SITES_TABLE_NAME).get(
                 site_name
@@ -77,6 +77,22 @@ class YoloDB(object):
             return r.table(self.SITES_TABLE_NAME).get(site_name).run(
                 conn
             )[field]
+
+    def remove_value(self, site_name, field, value):
+        """
+        If the field is a list field, remove one or more values from it.
+        If the field is a scalar, deletes the field from the row.
+        :param site_name: The name of the site to remove the value from
+        :param field: The field to operate on
+        :param value: The value(s) that will be removed from the field
+        :return:
+        """
+        with self.connection() as conn:
+            value = self.validate_field(field, value)
+
+            return r.table(self.SITES_TABLE_NAME).get(site_name).update(
+                {field: r.row[field].set_difference(value)}
+            ).run(conn)
 
     def delete_site(self, site_name):
         """Attempts to delete a site from the database. Returns the response"""
@@ -107,14 +123,14 @@ class YoloDB(object):
         :param field: What field to set
         :param value: The value to set
         """
-        value = self.validate_type(field, value)
+        value = self.validate_field(field, value)
 
         with self.connection() as conn:
             return r.table(self.SITES_TABLE_NAME).get(site_name).update(
                 {field: value}
             ).run(conn)
 
-    def validate_type(self, field, value):
+    def validate_field(self, field, value):
         """
         :param field: The field that is taking a new value
         :param value: The value to be set on the given field
