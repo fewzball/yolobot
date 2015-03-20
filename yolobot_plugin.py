@@ -2,6 +2,7 @@
 import db
 import irc3
 import sitebot_config
+import yolo_utils
 import yolofish
 
 BOLD = '\x02'
@@ -23,13 +24,13 @@ class Formatter(object):
                 if sitebot_config.FIELDS[field]['type'] is list:
                     field_value = site_info.get(
                         sitebot_config.FIELDS[field]['column_name'],
-                        ''
+                        []
                     )
-                    if field_value:
-                        if len(field_value) > 0:
-                            field_value = ' '.join(field_value)
-                        else:
-                            field_value = ''
+                    if len(field_value) > 0:
+                        field_value.sort()
+                        field_value = ' '.join(field_value)
+                    else:
+                        field_value = ''
                 else:
                     field_value = site_info.get(
                         sitebot_config.FIELDS[field]['column_name'],
@@ -54,6 +55,7 @@ class Plugin(object):
         '!delsite',
         '!help',
         '!rm',
+        '!search',
         '!set',
         '!site',
         '!sites',
@@ -77,6 +79,16 @@ class Plugin(object):
                         'Error: sitebot_config.py: field {} in LAYOUT does not '
                         'exist in FIELDS.'.format(field)
                     )
+
+    @staticmethod
+    def validate_always_uppercase():
+        for field in sitebot_config.ALWAYS_UPPERCASE:
+            if field not in sitebot_config.COLUMN_MAPPING:
+                raise Exception('Invalid field: {} found in ALWAYS_UPPERCASE')
+            if sitebot_config.COLUMN_MAPPING[field] != str:
+                raise Exception(
+                    "Hey retard, don't put non str fields in ALWAYS_UPPERCASE"
+                )
 
     @irc3.event(irc3.rfc.PRIVMSG)
     def on_message(self, mask, event, target, data):
@@ -136,19 +148,23 @@ class Plugin(object):
         if self.usage(args, target, 4, '!add <site> <field> <value(s)>'):
             return
 
-        if not sitebot_config.COLUMN_MAPPING.get(args[2]) == list:
+        site_name, field, values = args[1], args[2], args[3:]
+
+        values = yolo_utils.uppercase_if_needed(field, values)
+
+        if not sitebot_config.COLUMN_MAPPING.get(field) == list:
             return self.send_msg(
                 target,
                 'Field {} only allows 1 value! Perhaps you want to !set '
                 'instead?'.format(args[2])
             )
 
-        result = self.db.add_value(args[1], args[2], args[3:])
+        result = self.db.add_value(site_name, field, values)
         self.send_msg(
             target,
             '{}: set {} to: {}'.format(
-                Formatter.bold(args[1]),
-                Formatter.bold(args[2]),
+                Formatter.bold(site_name),
+                Formatter.bold(field),
                 ' '.join(result)
             )
         )
@@ -176,24 +192,27 @@ class Plugin(object):
         if self.usage(args, target, 4, '!rm <site> <field> <value>'):
             return
 
+        site_name, field, values = args[1], args[2], args[3:]
+        values = yolo_utils.uppercase_if_needed(field, values)
+
         try:
-            result = self.db.remove_value(args[1], args[2], args[3:])
+            result = self.db.remove_value(site_name, field, values)
         except self.db.InvalidField:
             return self.send_msg(
                 target,
                 '{} is an invalid field! Use !set to see a list of valid '
-                'fields'.format(args[2])
+                'fields'.format(field)
             )
 
         if result['skipped'] > 0:
             return self.send_msg(
                 target,
-                'Site {} does not exist!'.format(Formatter.bold(args[1]))
+                'Site {} does not exist!'.format(Formatter.bold(site_name))
             )
 
         self.send_msg(
             target,
-            '{}: done!'.format(Formatter.bold(args[1]))
+            '{}: done!'.format(Formatter.bold(site_name))
         )
 
     def delsite(self, target, args):
@@ -221,6 +240,37 @@ class Plugin(object):
             'Available commands: {}'.format(' '.join(self.COMMANDS))
         )
 
+    def search(self, target, args):
+        if self.usage(args, target, 3, '!search <field> <value>'):
+            return
+
+        field, values = args[1], args[2]
+        values = yolo_utils.uppercase_if_needed(field, values)
+
+        if args[1] not in sitebot_config.VALID_FIELDS:
+            return self.send_msg(
+                target,
+                '{} is not a valid field!'.format(field)
+            )
+
+        results = self.db.search(field, values)
+
+        if len(results) == 0:
+            return self.send_msg(
+                target,
+                '{} was not found on any site!'.format(values)
+            )
+
+        sorted_results = [each['name'] for each in results]
+        self.send_msg(
+            target,
+            '{}: {} found on: {}'.format(
+                Formatter.bold(field),
+                values,
+                Formatter.bold(' '.join(sorted_results))
+            )
+        )
+
     def send_msg(self, target, msg):
         self.bot.privmsg(
             target,
@@ -233,37 +283,40 @@ class Plugin(object):
         if self.usage(args, target, 4, usage_string):
             valid_fields = sitebot_config.VALID_FIELDS
             valid_fields.sort()
-            self.send_msg(
+            return self.send_msg(
                 target,
                 'Allowed fields: {}'.format(' '.join(valid_fields))
             )
 
+        site_name, field, values = args[1], args[2], args[3:]
+        values = yolo_utils.uppercase_if_needed(field, values)
+
         try:
-            result = self.db.set_value(args[1], args[2], args[3:])
+            result = self.db.set_value(site_name, field, values)
         except self.db.InvalidField:
             return self.send_msg(
                 target,
                 '{} is an invalid field! Use !set to see a list of valid '
-                'fields'.format(args[2])
+                'fields'.format(field)
             )
         except self.db.InvalidType as exc:
             return self.send_msg(
                 target,
-                'Field {} must be of type: {}'.format(args[2], exc.message)
+                'Field {} must be of type: {}'.format(field, exc.message)
             )
 
         if result['skipped'] > 0:
             return self.send_msg(
                 target,
-                'Site {} does not exist!'.format(args[1])
+                'Site {} does not exist!'.format(site_name)
             )
 
         self.send_msg(
             target,
             '{}: set {} to: {}'.format(
-                Formatter.bold(args[1]),
-                Formatter.bold(args[2]),
-                ' '.join(args[3:])
+                Formatter.bold(site_name),
+                Formatter.bold(field),
+                ' '.join(values)
             )
         )
 

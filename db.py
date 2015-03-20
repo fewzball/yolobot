@@ -117,9 +117,24 @@ class YoloDB(object):
                 'name'
             ).run(conn)
 
+    def search(self, field, value):
+        with self.connection() as conn:
+            field_type = sitebot_config.COLUMN_MAPPING[field]
+            if field_type == list:
+                result = r.table(self.SITES_TABLE_NAME).filter(
+                    lambda site: site[field].contains(value)
+                ).run(conn)
+                return [each for each in result]
+            else:
+                result = r.table(self.SITES_TABLE_NAME).filter(
+                    {field: field_type(value)}
+                ).run(conn)
+                return [each for each in result]
+
     def set_value(self, site_name, field, value):
         """Sets the given value on the given field for the given site
 
+        :param site_name: The name of the site
         :param field: What field to set
         :param value: The value to set
         """

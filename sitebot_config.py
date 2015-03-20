@@ -67,3 +67,13 @@ LAYOUT = (
     ('Imdb',),
     ('Comment',),
 )
+
+# Anything that you are going to search on you probably want to list here,
+# unless you are fine with the search being case sensitive. This has the side
+# effect of converting all values to uppercase before saving them to the
+# database.
+ALWAYS_UPPERCASE = (
+    'affils',
+    'allows',
+    'country',
+)
