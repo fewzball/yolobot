@@ -175,7 +175,7 @@ class Plugin(object):
             return
 
         try:
-            self.db.add_site(args[1].lower())
+            self.db.add_site(args[1].upper())
         except self.db.AlreadyExistsError:
             return self.send_msg(
                 target,
@@ -272,10 +272,30 @@ class Plugin(object):
         )
 
     def send_msg(self, target, msg):
-        self.bot.privmsg(
-            target,
-            self.fish.encrypt(msg)
-        )
+        encrypted_msg = self.fish.encrypt(msg)
+        if len(encrypted_msg) > 300:
+            parts = encrypted_msg.split()
+            batch = []
+            for chunk in parts:
+                if len(chunk) + len(batch) < 300:
+                    batch.append(chunk)
+                else:
+                    self.bot.privmsg(
+                        target,
+                        ' '.join(batch)
+                    )
+                    batch = [chunk]
+
+            if batch:
+                self.bot.privmsg(
+                    target,
+                    ' '.join(batch)
+                )
+        else:
+            self.bot.privmsg(
+                target,
+                encrypted_msg
+            )
 
     def set(self, target, args):
         """Sets a value for a site"""
@@ -325,7 +345,7 @@ class Plugin(object):
         if self.usage(args, target, 2, '!site <site_name>'):
             return
 
-        site_info = self.db.get_site(args[1])
+        site_info = self.db.get_site(args[1].upper())
 
         if not site_info:
             return self.send_msg(
