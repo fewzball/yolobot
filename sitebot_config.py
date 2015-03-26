@@ -76,4 +76,5 @@ ALWAYS_UPPERCASE = (
     'affils',
     'allows',
     'country',
+    'name',
 )

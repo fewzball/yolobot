@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import string
+
 import db
 import irc3
 import sitebot_config
@@ -61,6 +63,9 @@ class Plugin(object):
         '!sites',
     )
 
+    # max length of a message we will send at once before breaking into chunks
+    MAX_MSG_LENGTH = 490
+
     def __init__(self, bot):
         self.validate_layout()
 
@@ -110,6 +115,7 @@ class Plugin(object):
                 data = data.strip()
                 _, msg = data.split(' ', 1)
                 msg = self.fish.decrypt(msg)
+                msg = ''.join(_ for _ in msg if _ in string.printable)
                 parts = msg.split()
 
                 if parts[0] == '!reload':
@@ -273,24 +279,16 @@ class Plugin(object):
 
     def send_msg(self, target, msg):
         encrypted_msg = self.fish.encrypt(msg)
-        if len(encrypted_msg) > 300:
-            parts = encrypted_msg.split()
-            batch = []
-            for chunk in parts:
-                if len(chunk) + len(batch) < 300:
-                    batch.append(chunk)
-                else:
-                    self.bot.privmsg(
-                        target,
-                        ' '.join(batch)
-                    )
-                    batch = [chunk]
-
-            if batch:
+        msg_length = len(encrypted_msg)
+        if msg_length > self.MAX_MSG_LENGTH:
+            start, end = 0, self.MAX_MSG_LENGTH
+            while start < msg_length:
                 self.bot.privmsg(
                     target,
-                    ' '.join(batch)
+                    encrypted_msg[start:end]
                 )
+                start = end
+                end += self.MAX_MSG_LENGTH
         else:
             self.bot.privmsg(
                 target,
@@ -345,7 +343,7 @@ class Plugin(object):
         if self.usage(args, target, 2, '!site <site_name>'):
             return
 
-        site_info = self.db.get_site(args[1].upper())
+        site_info = self.db.get_site(args[1])
 
         if not site_info:
             return self.send_msg(

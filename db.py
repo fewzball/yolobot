@@ -4,6 +4,15 @@ import rethinkdb as r
 import sitebot_config
 
 
+def uppercase_site_name(func):
+    def wrapped(*args):
+        # args[0] = self
+        if len(args) > 2:
+            return func(args[0], args[1].upper(), *args[2:])
+        return func(args[0], args[1].upper())
+    return wrapped
+
+
 class YoloDB(object):
     SITES_TABLE_NAME = 'sites'
 
@@ -55,6 +64,7 @@ class YoloDB(object):
             if result['inserted'] != 1:
                 raise self.AlreadyExistsError()
 
+    @uppercase_site_name
     def add_value(self, site_name, field, value):
         """
         Adds a value to an array field.
@@ -78,6 +88,7 @@ class YoloDB(object):
                 conn
             )[field]
 
+    @uppercase_site_name
     def remove_value(self, site_name, field, value):
         """
         If the field is a list field, remove one or more values from it.
@@ -94,6 +105,7 @@ class YoloDB(object):
                 {field: r.row[field].set_difference(value)}
             ).run(conn)
 
+    @uppercase_site_name
     def delete_site(self, site_name):
         """Attempts to delete a site from the database. Returns the response"""
         with self.connection() as conn:
@@ -101,6 +113,7 @@ class YoloDB(object):
                 conn
             )
 
+    @uppercase_site_name
     def get_site(self, site_name):
         """Looks up a site from the database
 
@@ -131,6 +144,7 @@ class YoloDB(object):
                 ).run(conn)
                 return [each for each in result]
 
+    @uppercase_site_name
     def set_value(self, site_name, field, value):
         """Sets the given value on the given field for the given site
 
