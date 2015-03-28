@@ -54,6 +54,7 @@ class YoloDB(object):
     def connection(self):
         return r.connect(self.host, db=self.db_name)
 
+    @uppercase_site_name
     def add_site(self, site_name):
         """Adds a site to the database"""
         with self.connection() as conn:

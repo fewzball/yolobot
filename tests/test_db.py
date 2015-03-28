@@ -39,7 +39,7 @@ def test_site_should_get_persisted_to_database(yolodb):
     yolodb.add_site(site_fixture)
 
     result = yolodb.get_site(site_fixture)
-    assert result['name'] == site_fixture
+    assert result['name'] == site_fixture.upper()
 
 
 def test_should_raise_exception_when_trying_to_add_existing_site(yolodb):
@@ -58,7 +58,7 @@ def test_should_list_all_sites_in_the_database(yolodb):
     # results should also be in alphabetical order
     sites.sort()
     results = yolodb.list_sites()
-    assert [site['name'] for site in results] == sites
+    assert [site['name'] for site in results] == [s.upper() for s in sites]
 
 
 def test_should_set_value_successfully(yolodb):

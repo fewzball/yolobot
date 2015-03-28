@@ -183,7 +183,7 @@ class Plugin(object):
             return
 
         try:
-            self.db.add_site(args[1].upper())
+            self.db.add_site(args[1])
         except self.db.AlreadyExistsError:
             return self.send_msg(
                 target,
