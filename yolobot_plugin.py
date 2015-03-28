@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 import string
 
-import db
 import irc3
+
+
+import db
 import sitebot_config
 import yolo_utils
 import yolofish
@@ -279,16 +281,12 @@ class Plugin(object):
 
     def send_msg(self, target, msg):
         encrypted_msg = self.fish.encrypt(msg)
-        msg_length = len(encrypted_msg)
-        if msg_length > self.MAX_MSG_LENGTH:
-            start, end = 0, self.MAX_MSG_LENGTH
-            while start < msg_length:
+        if isinstance(encrypted_msg, list):
+            for msg in encrypted_msg:
                 self.bot.privmsg(
                     target,
-                    encrypted_msg[start:end]
+                    msg
                 )
-                start = end
-                end += self.MAX_MSG_LENGTH
         else:
             self.bot.privmsg(
                 target,

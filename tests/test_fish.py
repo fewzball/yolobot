@@ -15,7 +15,7 @@ def fish():
 
 
 def test_encrypting_a_long_string_should_work(fish):
-    fixture = 'i' * 600
+    fixture = 'this is a test' * 22
     encrypted = fish.encrypt(fixture)
 
-    assert fish.decrypt(encrypted[4:]) == fixture
+    assert fish.decrypt(encrypted[0][4:]) == fixture
