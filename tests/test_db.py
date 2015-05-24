@@ -144,6 +144,21 @@ def test_search_should_work(yolodb):
     assert len(result) == 2
 
 
+def test_should_return_results_sorted(yolodb):
+    yolodb.add_site('foo')
+    yolodb.add_site('bar')
+    yolodb.add_site('baz')
+    yolodb.add_site('alpha')
+
+    yolodb.set_value('foo', 'users', ['user1', 'user2'])
+    yolodb.set_value('bar', 'users', ['user1'])
+    yolodb.set_value('baz', 'users', ['user1'])
+    yolodb.set_value('alpha', 'users', ['user1', 'user2'])
+    result = yolodb.search('users', 'user1')
+    result_site_names = [site['name'].lower() for site in result]
+    assert result_site_names == ['alpha', 'bar', 'baz', 'foo']
+
+
 def test_search_with_no_results(yolodb):
     result = yolodb.search('users', 'user1')
     assert result == []

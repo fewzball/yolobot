@@ -3,7 +3,6 @@ import string
 
 import irc3
 
-
 import db
 import sitebot_config
 import yolo_utils

@@ -137,13 +137,13 @@ class YoloDB(object):
             if field_type == list:
                 result = r.table(self.SITES_TABLE_NAME).filter(
                     lambda site: site[field].contains(value)
-                ).run(conn)
-                return [each for each in result]
+                ).order_by('name').run(conn)
             else:
                 result = r.table(self.SITES_TABLE_NAME).filter(
                     {field: field_type(value)}
-                ).run(conn)
-                return [each for each in result]
+                ).order_by('name').run(conn)
+
+            return [each for each in result]
 
     @uppercase_site_name
     def set_value(self, site_name, field, value):
